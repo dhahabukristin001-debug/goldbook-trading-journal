@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GOLDBOOK — Trades</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0600;--panel:#140e00;--panel2:#1a1200;--gold:#f5c518;--gold2:#c8860a;--text:#f0e6c8;--dim:#6b4f00;--dim2:#3a2800;--profit:#d4a843;--loss:#cc4400;--border:rgba(245,197,24,0.18)}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% -20%,rgba(245,197,24,0.05) 0%,transparent 60%)}
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(20,14,0,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-logo-box{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--bg)}
+.nav-title{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);letter-spacing:3px}
+.nav-links{display:flex;gap:4px}
+.nav-link{padding:7px 14px;border-radius:6px;font-size:10px;letter-spacing:2px;color:var(--dim);text-decoration:none;transition:all 0.2s;border:1px solid transparent}
+.nav-link:hover,.nav-link.active{background:rgba(245,197,24,0.1);color:var(--gold);border-color:var(--border)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.acc-badge{background:rgba(245,197,24,0.08);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:10px;color:var(--gold);letter-spacing:1px}
+.logout{font-size:10px;color:var(--dim);text-decoration:none}
+.logout:hover{color:var(--loss)}
+.main{padding:20px 24px;max-width:1400px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.panel-head{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(245,197,24,0.02)}
+.panel-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:2px}
+.panel-body{padding:16px 20px}
+/* FILTERS */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.filters input,.filters select{
+  background:var(--panel2);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;color:var(--text);font-family:'Share Tech Mono',monospace;
+  font-size:11px;outline:none;
+}
+.filters select option{background:var(--panel2)}
+.filter-btn{
+  background:rgba(245,197,24,0.1);border:1px solid var(--border);border-radius:6px;
+  padding:8px 16px;color:var(--gold);font-family:'Share Tech Mono',monospace;
+  font-size:11px;cursor:pointer;letter-spacing:1px;
+}
+/* TABLE */
+.trade-table{width:100%;border-collapse:collapse;font-size:11px}
+.trade-table th{color:var(--dim);font-size:9px;letter-spacing:1px;padding:8px 10px;text-align:left;font-weight:400;border-bottom:1px solid var(--border)}
+.trade-table td{padding:10px 10px;border-bottom:1px solid rgba(245,197,24,0.04);vertical-align:middle;cursor:pointer}
+.trade-table tr:hover td{background:rgba(245,197,24,0.04)}
+.trade-table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:1px}
+.badge.buy{background:rgba(212,168,67,0.15);color:var(--profit)}
+.badge.sell{background:rgba(204,68,0,0.15);color:var(--loss)}
+.pnl-pos{color:var(--profit);font-weight:700}
+.pnl-neg{color:var(--loss);font-weight:700}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--panel2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-family:'Cinzel',serif;font-size:14px;color:var(--gold)}
+.modal-close{background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:0 4px}
+.modal-close:hover{color:var(--loss)}
+.modal-body{padding:20px}
+.trade-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.detail-row{display:flex;justify-content:space-between;padding:8px 12px;background:rgba(245,197,24,0.04);border-radius:6px;font-size:11px}
+.detail-row .lbl{color:var(--dim)}
+.detail-row .val{color:var(--text);font-weight:700}
+.detail-row .val.pos{color:var(--profit)}
+.detail-row .val.neg{color:var(--loss)}
+.chart-area{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:8px}
+.chart-note{font-size:10px;color:var(--dim);text-align:center;margin-top:8px;letter-spacing:1px}
+.no-trades{text-align:center;padding:40px;color:var(--dim);letter-spacing:2px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo"><div class="nav-logo-box">GB</div><div><div class="nav-title">GOLDBOOK</div></div></div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link">OVERVIEW</a>
+    <a href="/trades"    class="nav-link active">TRADES</a>
+    <a href="/analytics" class="nav-link">ANALYTICS</a>
+  </div>
+  <div class="nav-right">
+    <div class="acc-badge">{{ account_number }}</div>
+    <a href="/logout" class="logout">LOGOUT</a>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">📋 TRADE HISTORY</span>
+      <span style="font-size:9px;color:var(--dim)" id="trade-count">Loading...</span>
+    </div>
+    <div class="panel-body">
+      <!-- FILTERS -->
+      <div class="filters">
+        <input type="date" id="f-from" placeholder="From date">
+        <input type="date" id="f-to"   placeholder="To date">
+        <select id="f-pair"><option value="">All Pairs</option></select>
+        <select id="f-result"><option value="">Win & Loss</option><option value="win">Wins Only</option><option value="loss">Losses Only</option></select>
+        <button class="filter-btn" onclick="applyFilters()">FILTER</button>
+        <button class="filter-btn" onclick="clearFilters()">CLEAR</button>
+      </div>
+      <!-- TABLE -->
+      <div style="overflow-x:auto">
+        <table class="trade-table">
+          <thead>
+            <tr>
+              <th>TICKET</th><th>PAIR</th><th>TYPE</th>
+              <th>OPEN TIME</th><th>CLOSE TIME</th>
+              <th>ENTRY</th><th>EXIT</th>
+              <th>SL</th><th>TP</th>
+              <th>LOTS</th><th>DURATION</th><th>P&L</th>
+            </tr>
+          </thead>
+          <tbody id="trades-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRADE DETAIL MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Trade Detail</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="trade-detail-grid" id="modal-details"></div>
+      <div class="chart-area">
+        <canvas id="tradeChart" height="120"></canvas>
+        <div class="chart-note">▲ Entry point &nbsp;|&nbsp; ▼ Exit point &nbsp;|&nbsp; — SL &nbsp;|&nbsp; — TP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let allTrades = [];
+let tradeChart = null;
+Chart.defaults.color = '#6b4f00';
+Chart.defaults.borderColor = 'rgba(245,197,24,0.08)';
+
+async function loadTrades() {
+  const res = await fetch('/api/trades');
+  allTrades  = await res.json();
+  populatePairFilter();
+  renderTrades(allTrades);
+}
+
+function populatePairFilter() {
+  const pairs = [...new Set(allTrades.map(t=>t.pair))].sort();
+  const sel   = document.getElementById('f-pair');
+  sel.innerHTML = '<option value="">All Pairs</option>' + pairs.map(p=>`<option>${p}</option>`).join('');
+}
+
+function renderTrades(trades) {
+  document.getElementById('trade-count').textContent = trades.length + ' trades';
+  const body = document.getElementById('trades-body');
+  if(!trades.length) {
+    body.innerHTML = '<tr><td colspan="12" class="no-trades">NO TRADES FOUND</td></tr>';
+    return;
+  }
+  body.innerHTML = trades.map(t => {
+    const pnl   = parseFloat(t.profit||0);
+    const pc    = pnl>=0 ? 'pnl-pos':'pnl-neg';
+    const pstr  = (pnl>=0?'+':'')+pnl.toFixed(2);
+    const dur   = t.duration_minutes ? formatDuration(t.duration_minutes) : '--';
+    const badge = t.trade_type==='BUY'
+      ? '<span class="badge buy">BUY</span>'
+      : '<span class="badge sell">SELL</span>';
+    return `<tr onclick="openTrade(${t.id})">
+      <td style="color:var(--dim)">#${t.ticket||t.id}</td>
+      <td style="font-weight:700;color:var(--text)">${t.pair||'--'}</td>
+      <td>${badge}</td>
+      <td style="color:var(--dim)">${(t.open_time||'').slice(0,16)}</td>
+      <td style="color:var(--dim)">${(t.close_time||'').slice(0,16)}</td>
+      <td>${t.open_price||'--'}</td>
+      <td>${t.close_price||'--'}</td>
+      <td style="color:var(--loss)">${t.sl||'--'}</td>
+      <td style="color:var(--profit)">${t.tp||'--'}</td>
+      <td style="color:var(--dim)">${t.lots||'--'}</td>
+      <td style="color:var(--dim)">${dur}</td>
+      <td class="${pc}">${pstr}$</td>
+    </tr>`;
+  }).join('');
+}
+
+function formatDuration(mins) {
+  if(mins < 60)  return mins+'m';
+  if(mins < 1440) return Math.floor(mins/60)+'h '+( mins%60)+'m';
+  return Math.floor(mins/1440)+'d';
+}
+
+function applyFilters() {
+  const from   = document.getElementById('f-from').value;
+  const to     = document.getElementById('f-to').value;
+  const pair   = document.getElementById('f-pair').value;
+  const result = document.getElementById('f-result').value;
+  let filtered = allTrades;
+  if(from) filtered = filtered.filter(t=>(t.close_time||'')>=from);
+  if(to)   filtered = filtered.filter(t=>(t.close_time||'')<=to+'T23:59');
+  if(pair) filtered = filtered.filter(t=>t.pair===pair);
+  if(result==='win')  filtered = filtered.filter(t=>parseFloat(t.profit||0)>0);
+  if(result==='loss') filtered = filtered.filter(t=>parseFloat(t.profit||0)<0);
+  renderTrades(filtered);
+}
+
+function clearFilters() {
+  document.getElementById('f-from').value   = '';
+  document.getElementById('f-to').value     = '';
+  document.getElementById('f-pair').value   = '';
+  document.getElementById('f-result').value = '';
+  renderTrades(allTrades);
+}
+
+function openTrade(id) {
+  const t = allTrades.find(x=>x.id===id);
+  if(!t) return;
+  const pnl = parseFloat(t.profit||0);
+  document.getElementById('modal-title').textContent = `${t.pair} ${t.trade_type} — #${t.ticket||t.id}`;
+  document.getElementById('modal-details').innerHTML = [
+    ['Pair',       t.pair||'--'],
+    ['Direction',  t.trade_type||'--'],
+    ['Entry Price',t.open_price||'--'],
+    ['Exit Price', t.close_price||'--'],
+    ['Stop Loss',  t.sl||'--'],
+    ['Take Profit',t.tp||'--'],
+    ['Lot Size',   t.lots||'--'],
+    ['Open Time',  (t.open_time||'--').slice(0,19)],
+    ['Close Time', (t.close_time||'--').slice(0,19)],
+    ['Duration',   formatDuration(t.duration_minutes||0)],
+    ['Commission', t.commission||0],
+    ['P&L',        (pnl>=0?'+':'')+pnl.toFixed(2)+' USD', pnl>=0?'pos':'neg'],
+  ].map(([l,v,cls])=>`
+    <div class="detail-row">
+      <span class="lbl">${l}</span>
+      <span class="val ${cls||''}">${v}</span>
+    </div>`).join('');
+
+  // Chart showing the trade visually
+  drawTradeChart(t);
+  document.getElementById('modal').classList.add('open');
+}
+
+function drawTradeChart(t) {
+  if(tradeChart) tradeChart.destroy();
+  const entry = parseFloat(t.open_price  || 0);
+  const exit  = parseFloat(t.close_price || 0);
+  const sl    = parseFloat(t.sl || 0);
+  const tp    = parseFloat(t.tp || 0);
+  const isBuy = t.trade_type === 'BUY';
+
+  // Simulate price path between entry and exit
+  const steps = 20;
+  const labels = Array.from({length:steps+1},(_,i)=>'');
+  const path   = [];
+  for(let i=0;i<=steps;i++) {
+    const prog  = i/steps;
+    const noise = (Math.random()-0.5)*Math.abs(exit-entry)*0.4;
+    path.push(entry + (exit-entry)*prog + noise);
+  }
+  path[0]     = entry;
+  path[steps] = exit;
+
+  const ctx  = document.getElementById('tradeChart').getContext('2d');
+  const gold = '#f5c518';
+  tradeChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Price', data:path, borderColor:gold, borderWidth:2, pointRadius:0, fill:false, tension:0.4 },
+        { label:'Entry', data:Array(steps+1).fill(entry), borderColor:'#29b6f6', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
+        { label:'Exit',  data:Array(steps+1).fill(exit),  borderColor:exit>=entry?'#d4a843':'#cc4400', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
+        sl ? { label:'SL', data:Array(steps+1).fill(sl), borderColor:'#cc4400', borderWidth:1, borderDash:[2,4], pointRadius:0, fill:false } : null,
+        tp ? { label:'TP', data:Array(steps+1).fill(tp), borderColor:'#d4a843', borderWidth:1, borderDash:[2,4], pointRadius:0, fill:false } : null,
+      ].filter(Boolean)
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:true,labels:{font:{size:9},color:'#6b4f00'}}},
+      scales:{
+        x:{display:false},
+        y:{ticks:{font:{size:9}},grid:{color:'rgba(245,197,24,0.05)'}}
+      }
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+document.getElementById('modal').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+
+loadTrades();
+</script>
+</body>
+</html>
