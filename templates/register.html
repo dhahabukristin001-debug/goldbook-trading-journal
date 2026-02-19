@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GOLDBOOK — Register</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0600;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,0.08) 0%,transparent 60%)}
+.card{background:linear-gradient(160deg,#1a1200,#0f0900);border:1px solid rgba(245,197,24,0.3);border-radius:20px;padding:48px 44px;width:100%;max-width:420px;box-shadow:0 0 80px rgba(245,197,24,0.06)}
+.logo{text-align:center;margin-bottom:32px}
+.logo-box{width:64px;height:64px;background:linear-gradient(135deg,#f5c518,#c8860a);border-radius:14px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:20px;color:#0a0600}
+.logo-title{font-family:'Cinzel',serif;font-size:22px;color:#f5c518;letter-spacing:4px}
+.logo-sub{font-size:10px;color:#6b4f00;letter-spacing:2px;margin-top:4px}
+label{display:block;font-size:9px;color:#6b4f00;letter-spacing:2px;margin-bottom:7px;text-transform:uppercase}
+input{width:100%;background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.2);border-radius:8px;padding:12px 16px;color:#f0e6c8;font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;margin-bottom:14px;transition:border-color 0.2s}
+input:focus{border-color:rgba(245,197,24,0.6)}
+input::placeholder{color:#3a2800}
+button{width:100%;background:linear-gradient(135deg,#f5c518,#c8860a);border:none;border-radius:8px;padding:13px;color:#0a0600;font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:3px;cursor:pointer;margin-top:4px}
+.error{background:rgba(204,68,0,0.1);border:1px solid rgba(204,68,0,0.3);border-radius:6px;padding:10px 14px;color:#ff6633;font-size:11px;margin-bottom:14px;text-align:center}
+.link{text-align:center;margin-top:18px;font-size:10px;color:#3a2800}
+.link a{color:#6b4f00;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-box">GB</div>
+    <div class="logo-title">GOLDBOOK</div>
+    <div class="logo-sub">CREATE ACCOUNT</div>
+  </div>
+  {% if error %}<div class="error">⚠ {{ error }}</div>{% endif %}
+  <form method="POST">
+    <label>MT5 Account Number</label>
+    <input type="text" name="account_number" placeholder="e.g. 298417143" required>
+    <label>Password</label>
+    <input type="password" name="password" placeholder="Create a password" required>
+    <label>Broker Name</label>
+    <input type="text" name="broker" placeholder="e.g. Exness">
+    <label>Account Currency</label>
+    <input type="text" name="currency" placeholder="USD" value="USD">
+    <button type="submit">CREATE ACCOUNT →</button>
+  </form>
+  <div class="link">Already registered? <a href="/login">Login here</a></div>
+</div>
+</body>
+</html>
