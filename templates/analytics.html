@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GOLDBOOK — Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0600;--panel:#140e00;--panel2:#1a1200;--gold:#f5c518;--gold2:#c8860a;--text:#f0e6c8;--dim:#6b4f00;--dim2:#3a2800;--profit:#d4a843;--loss:#cc4400;--border:rgba(245,197,24,0.18)}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:13px;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% -20%,rgba(245,197,24,0.05) 0%,transparent 60%)}
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(20,14,0,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-logo-box{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;font-size:13px;color:var(--bg)}
+.nav-title{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);letter-spacing:3px}
+.nav-links{display:flex;gap:4px}
+.nav-link{padding:7px 14px;border-radius:6px;font-size:10px;letter-spacing:2px;color:var(--dim);text-decoration:none;transition:all 0.2s;border:1px solid transparent}
+.nav-link:hover,.nav-link.active{background:rgba(245,197,24,0.1);color:var(--gold);border-color:var(--border)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.acc-badge{background:rgba(245,197,24,0.08);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:10px;color:var(--gold);letter-spacing:1px}
+.logout{font-size:10px;color:var(--dim);text-decoration:none}.logout:hover{color:var(--loss)}
+.main{padding:20px 24px;max-width:1400px;margin:0 auto}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.panel-head{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(245,197,24,0.02)}
+.panel-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:2px}
+.panel-body{padding:20px}
+.period-tabs{display:flex;gap:4px}
+.period-tab{padding:4px 12px;border-radius:4px;font-size:9px;letter-spacing:1px;cursor:pointer;color:var(--dim);border:1px solid transparent;transition:all 0.2s}
+.period-tab.active{background:rgba(245,197,24,0.1);color:var(--gold);border-color:var(--border)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo"><div class="nav-logo-box">GB</div><div><div class="nav-title">GOLDBOOK</div></div></div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link">OVERVIEW</a>
+    <a href="/trades"    class="nav-link">TRADES</a>
+    <a href="/analytics" class="nav-link active">ANALYTICS</a>
+  </div>
+  <div class="nav-right">
+    <div class="acc-badge">{{ account_number }}</div>
+    <a href="/logout" class="logout">LOGOUT</a>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- ROW 1: Hours + Days -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">⏰ BEST TRADING HOURS</span></div>
+      <div class="panel-body"><canvas id="hoursChart" height="160"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">📆 BEST DAY OF WEEK</span></div>
+      <div class="panel-body"><canvas id="daysChart" height="160"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Monthly P&L -->
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">📊 P&L OVER TIME</span>
+      <div class="period-tabs">
+        <div class="period-tab active" onclick="setPeriod('monthly',this)">MONTHLY</div>
+        <div class="period-tab" onclick="setPeriod('weekly',this)">WEEKLY</div>
+      </div>
+    </div>
+    <div class="panel-body"><canvas id="pnlChart" height="80"></canvas></div>
+  </div>
+
+  <!-- ROW 3: By Pair -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">💱 P&L BY PAIR</span></div>
+      <div class="panel-body"><canvas id="pairChart" height="180"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">📉 DRAWDOWN CURVE</span></div>
+      <div class="panel-body"><canvas id="ddChart" height="180"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+Chart.defaults.color = '#6b4f00';
+Chart.defaults.borderColor = 'rgba(245,197,24,0.08)';
+const gold = '#f5c518', loss = '#cc4400', profit = '#d4a843';
+
+let rawData = null;
+let pnlChart = null;
+
+function barColor(val) { return val >= 0 ? profit : loss; }
+
+async function loadData() {
+  const res = await fetch('/api/stats');
+  rawData   = await res.json();
+
+  // Hours chart
+  const hours = rawData.hours || {};
+  const hLabels = Object.keys(hours).sort((a,b)=>+a-+b).map(h=>h+':00');
+  const hVals   = hLabels.map(l=>hours[l.replace(':00','')]||0);
+  new Chart(document.getElementById('hoursChart'),{
+    type:'bar',
+    data:{labels:hLabels,datasets:[{data:hVals,backgroundColor:hVals.map(barColor),borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:8},maxTicksLimit:12}},y:{ticks:{font:{size:9}}}}}
+  });
+
+  // Days chart
+  const days   = rawData.days || {};
+  const dOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dVals  = dOrder.map(d=>days[d]||0);
+  new Chart(document.getElementById('daysChart'),{
+    type:'bar',
+    data:{labels:dOrder,datasets:[{data:dVals,backgroundColor:dVals.map(barColor),borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9}}}}}
+  });
+
+  // Monthly P&L (default)
+  renderPnL('monthly');
+
+  // Pair chart
+  const pairs  = rawData.pairs || {};
+  const pNames = Object.keys(pairs);
+  const pVals  = pNames.map(p=>pairs[p].profit);
+  new Chart(document.getElementById('pairChart'),{
+    type:'bar',
+    data:{labels:pNames,datasets:[{data:pVals,backgroundColor:pVals.map(barColor),borderRadius:4}]},
+    options:{
+      indexAxis:'y',responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}
+    }
+  });
+
+  // Drawdown chart
+  const trades = await fetch('/api/trades').then(r=>r.json());
+  const profits = trades.map(t=>parseFloat(t.profit||0)).reverse();
+  let peak=0,running=0;
+  const ddVals = profits.map(p=>{running+=p;if(running>peak)peak=running;return -(peak-running);});
+  const ctx  = document.getElementById('ddChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(204,68,0,0.3)');
+  grad.addColorStop(1,'rgba(204,68,0,0)');
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:ddVals.map((_,i)=>i+1),
+      datasets:[{data:ddVals,borderColor:loss,backgroundColor:grad,borderWidth:2,pointRadius:0,fill:true,tension:0.3}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{ticks:{font:{size:9}}}}}
+  });
+}
+
+function renderPnL(period) {
+  if(pnlChart) pnlChart.destroy();
+  const monthly = rawData?.monthly || {};
+  let labels, vals;
+  if(period==='monthly'){
+    labels = Object.keys(monthly).sort();
+    vals   = labels.map(k=>monthly[k]);
+  } else {
+    // Group by week approximation from monthly data
+    labels = Object.keys(monthly).sort();
+    vals   = labels.map(k=>monthly[k]);
+  }
+  const ctx = document.getElementById('pnlChart').getContext('2d');
+  pnlChart = new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{data:vals,backgroundColor:vals.map(barColor),borderRadius:6,barThickness:28}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+}
+
+function setPeriod(period, el) {
+  document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderPnL(period);
+}
+
+loadData();
+</script>
+</body>
+</html>
