@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GOLDBOOK — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0a0600;
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;
+  overflow:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(245,197,24,0.08) 0%,transparent 60%);
+}
+.card{
+  background:linear-gradient(160deg,#1a1200,#0f0900);
+  border:1px solid rgba(245,197,24,0.3);
+  border-radius:20px;padding:52px 44px;
+  width:100%;max-width:420px;
+  box-shadow:0 0 80px rgba(245,197,24,0.08),inset 0 1px 0 rgba(245,197,24,0.1);
+  animation:rise 0.6s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.logo{text-align:center;margin-bottom:40px}
+.logo-icon{
+  width:70px;height:70px;
+  background:linear-gradient(135deg,#f5c518,#c8860a);
+  border-radius:16px;margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:22px;font-weight:700;
+  color:#0a0600;box-shadow:0 0 40px rgba(245,197,24,0.3);
+}
+.logo-title{font-family:'Cinzel',serif;font-size:24px;color:#f5c518;letter-spacing:4px}
+.logo-sub{font-size:10px;color:#6b4f00;letter-spacing:3px;margin-top:6px}
+.tabs{display:flex;gap:0;margin-bottom:28px;border:1px solid rgba(245,197,24,0.2);border-radius:8px;overflow:hidden}
+.tab{
+  flex:1;padding:10px;text-align:center;font-size:11px;letter-spacing:2px;
+  cursor:pointer;color:#6b4f00;transition:all 0.2s;
+}
+.tab.active{background:rgba(245,197,24,0.12);color:#f5c518}
+label{display:block;font-size:9px;color:#6b4f00;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
+input{
+  width:100%;background:rgba(245,197,24,0.04);
+  border:1px solid rgba(245,197,24,0.2);border-radius:8px;
+  padding:13px 16px;color:#f0e6c8;font-family:'Share Tech Mono',monospace;
+  font-size:14px;outline:none;margin-bottom:16px;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+input:focus{border-color:rgba(245,197,24,0.6);box-shadow:0 0 20px rgba(245,197,24,0.08)}
+input::placeholder{color:#3a2800}
+button{
+  width:100%;background:linear-gradient(135deg,#f5c518,#c8860a);
+  border:none;border-radius:8px;padding:14px;
+  color:#0a0600;font-family:'Cinzel',serif;
+  font-weight:700;font-size:14px;letter-spacing:3px;
+  cursor:pointer;transition:opacity 0.2s,transform 0.1s;
+  margin-top:4px;
+}
+button:hover{opacity:0.9;transform:translateY(-1px)}
+.error{
+  background:rgba(204,68,0,0.1);border:1px solid rgba(204,68,0,0.3);
+  border-radius:6px;padding:10px 14px;color:#ff6633;
+  font-size:11px;margin-bottom:16px;text-align:center;letter-spacing:1px;
+}
+.footer{text-align:center;margin-top:24px;font-size:10px;color:#3a2800}
+.footer a{color:#6b4f00;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">GB</div>
+    <div class="logo-title">GOLDBOOK</div>
+    <div class="logo-sub">TRADING JOURNAL & ANALYTICS</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('login')">LOGIN</div>
+    <div class="tab" onclick="showTab('register')">REGISTER</div>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div id="login-form">
+    {% if error %}<div class="error">⚠ {{ error }}</div>{% endif %}
+    <form method="POST" action="/login">
+      <label>MT5 Account Number</label>
+      <input type="text" name="account_number" placeholder="e.g. 298417143" autofocus>
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••">
+      <button type="submit">ENTER GOLDBOOK →</button>
+    </form>
+  </div>
+
+  <!-- REGISTER FORM -->
+  <div id="register-form" style="display:none">
+    <form method="POST" action="/register">
+      <label>MT5 Account Number</label>
+      <input type="text" name="account_number" placeholder="e.g. 298417143">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Create a password">
+      <label>Broker Name</label>
+      <input type="text" name="broker" placeholder="e.g. Exness">
+      <label>Currency</label>
+      <input type="text" name="currency" placeholder="USD" value="USD">
+      <button type="submit">CREATE ACCOUNT →</button>
+    </form>
+  </div>
+
+  <div class="footer">GOLDBOOK v1.0 &nbsp;·&nbsp; <a href="#">Secure Access</a></div>
+</div>
+<script>
+function showTab(t){
+  document.getElementById('login-form').style.display    = t==='login'    ? 'block':'none';
+  document.getElementById('register-form').style.display = t==='register' ? 'block':'none';
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
+}
+</script>
+</body>
+</html>
